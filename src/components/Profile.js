@@ -1,97 +1,85 @@
 import Navbar from "./Navbar";
-import { useLocation, useParams } from 'react-router-dom';
+//import { useParams } from 'react-router-dom';
 import MarketplaceJSON from "../Marketplace.json";
 import axios from "axios";
 import { useState } from "react";
 import NFTTile from "./NFTTile";
 
-export default function Profile () {
-    const [data, updateData] = useState([]);
-    const [dataFetched, updateFetched] = useState(false);
-    const [address, updateAddress] = useState("0x");
-    const [totalPrice, updateTotalPrice] = useState("0");
+export default function Profile() {
+    const [nfts, setNfts] = useState([]);
+    const [fetched, setFetched] = useState(false);
+    const [wallet, setWallet] = useState("");
+    const [totalValue, setTotalValue] = useState("0");
 
-    async function getNFTData(tokenId) {
+    //const params = useParams();
+
+    async function fetchNFTs() {
         const ethers = require("ethers");
-        let sumPrice = 0;
-        //After adding your Hardhat network to your metamask, this code will get providers and signers
+        let valueAccumulator = 0;
+
         const provider = new ethers.providers.Web3Provider(window.ethereum);
         const signer = provider.getSigner();
-        const addr = await signer.getAddress();
+        const userAddress = await signer.getAddress();
 
-        //Pull the deployed contract instance
-        let contract = new ethers.Contract(MarketplaceJSON.address, MarketplaceJSON.abi, signer)
+        const contract = new ethers.Contract(MarketplaceJSON.address, MarketplaceJSON.abi, signer);
+        const listedItems = await contract.getMyNFTs();
 
-        //create an NFT Token
-        let transaction = await contract.getMyNFTs()
+        const nftList = await Promise.all(
+            listedItems.map(async (item) => {
+                const tokenURI = await contract.tokenURI(item.tokenId);
+                const meta = (await axios.get(tokenURI)).data;
 
-        /*
-        * Below function takes the metadata from tokenURI and the data returned by getMyNFTs() contract function
-        * and creates an object of information that is to be displayed
-        */
-        
-        const items = await Promise.all(transaction.map(async i => {
-            const tokenURI = await contract.tokenURI(i.tokenId);
-            let meta = await axios.get(tokenURI);
-            meta = meta.data;
+                const ethPrice = ethers.utils.formatUnits(item.price.toString(), 'ether');
+                valueAccumulator += parseFloat(ethPrice);
 
-            let price = ethers.utils.formatUnits(i.price.toString(), 'ether');
-            let item = {
-                price,
-                tokenId: i.tokenId.toNumber(),
-                seller: i.seller,
-                owner: i.owner,
-                image: meta.image,
-                name: meta.name,
-                description: meta.description,
-            }
-            sumPrice += Number(price);
-            return item;
-        }))
+                return {
+                    tokenId: item.tokenId.toNumber(),
+                    name: meta.name,
+                    description: meta.description,
+                    image: meta.image,
+                    price: ethPrice,
+                    owner: item.owner,
+                    seller: item.seller,
+                };
+            })
+        );
 
-        updateData(items);
-        updateFetched(true);
-        updateAddress(addr);
-        updateTotalPrice(sumPrice.toPrecision(3));
+        setWallet(userAddress);
+        setTotalValue(valueAccumulator.toFixed(3));
+        setNfts(nftList);
+        setFetched(true);
     }
 
-    const params = useParams();
-    const tokenId = params.tokenId;
-    if(!dataFetched)
-        getNFTData(tokenId);
+    if (!fetched) fetchNFTs();
 
     return (
-        <div className="profileClass" style={{"min-height":"100vh"}}>
-            <Navbar></Navbar>
-            <div className="profileClass">
-            <div className="flex text-center flex-col mt-11 md:text-2xl text-white">
-                <div className="mb-5">
-                    <h2 className="font-bold">Wallet Address</h2>  
-                    {address}
-                </div>
-            </div>
-            <div className="flex flex-row text-center justify-center mt-10 md:text-2xl text-white">
-                    <div>
-                        <h2 className="font-bold">No. of NFTs</h2>
-                        {data.length}
+        <div className="min-h-screen bg-[#0d0d0d] text-white">
+            <Navbar />
+            <div className="max-w-7xl mx-auto py-12 px-4">
+                <div className="bg-[#1a1a1a] rounded-xl p-6 mb-10 shadow-lg border border-purple-800">
+                    <h1 className="text-3xl font-semibold text-purple-400 mb-2">Welcome Back, Creator!</h1>
+                    <p className="text-sm break-all text-gray-300 mb-1"><strong>Connected Wallet:</strong> {wallet}</p>
+                    <div className="flex gap-8 mt-4 text-lg">
+                        <p><strong>NFTs Owned:</strong> {nfts.length}</p>
+                        <p><strong>Total Holdings:</strong> {totalValue} ETH</p>
                     </div>
-                    <div className="ml-20">
-                        <h2 className="font-bold">Total Value</h2>
-                        {totalPrice} ETH
-                    </div>
-            </div>
-            <div className="flex flex-col text-center items-center mt-11 text-white">
-                <h2 className="font-bold">Your NFTs</h2>
-                <div className="flex justify-center flex-wrap max-w-screen-xl">
-                    {data.map((value, index) => {
-                    return <NFTTile data={value} key={index}></NFTTile>;
-                    })}
                 </div>
-                <div className="mt-10 text-xl">
-                    {data.length == 0 ? "Oops, No NFT data to display (Are you logged in?)":""}
+
+                <div>
+                    <h2 className="text-2xl font-semibold text-purple-300 mb-6">Your NFT Collection</h2>
+                    {nfts.length > 0 ? (
+                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+                            {nfts.map((nft, index) => (
+                                <NFTTile key={index} data={nft} />
+                            ))}
+                        </div>
+                    ) : (
+                        <div className="text-red-400 mt-8 text-center text-lg">
+                            No NFTs found. Have you connected your wallet?
+                        </div>
+                    )}
                 </div>
-            </div>
             </div>
         </div>
-    )
-};
+    );
+}
