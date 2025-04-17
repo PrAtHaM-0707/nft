@@ -30,40 +30,36 @@ function Navbar() {
       if (!window.ethereum) throw new Error("MetaMask not detected");
 
       const chainId = await window.ethereum.request({ method: "eth_chainId" });
-      if (chainId !== "0x5") {
+      if (chainId !== "0x8274f") { // Sepolia chain ID
         try {
-          // Attempt to switch to Goerli (chainId: 0x5)
           await window.ethereum.request({
             method: "wallet_switchEthereumChain",
-            params: [{ chainId: "0x5" }],
+            params: [{ chainId: "0x8274f" }],
           });
         } catch (switchError) {
-          // Handle error 4902: Unrecognized chain ID
           if (switchError.code === 4902) {
-            // Add Goerli network
             await window.ethereum.request({
               method: "wallet_addEthereumChain",
               params: [
                 {
-                  chainId: "0x5",
-                  chainName: "Goerli Test Network",
+                  chainId: "0x8274f", // Sepolia
+                  chainName: "Sepolia Test Network",
                   nativeCurrency: {
-                    name: "Goerli ETH",
+                    name: "Sepolia ETH",
                     symbol: "ETH",
                     decimals: 18,
                   },
-                  rpcUrls: ["https://goerli.infura.io/v3/4c305b211d02419daf9e6111514b4cdd"],
-                  blockExplorerUrls: ["https://goerli.etherscan.io"],
+                  rpcUrls: ["https://rpc.sepolia.org"], // Public Sepolia RPC
+                  blockExplorerUrls: ["https://sepolia.etherscan.io"],
                 },
               ],
             });
-            // Retry switching to Goerli after adding
             await window.ethereum.request({
               method: "wallet_switchEthereumChain",
-              params: [{ chainId: "0x5" }],
+              params: [{ chainId: "0x8274f" }],
             });
           } else {
-            throw switchError; // Re-throw other errors
+            throw switchError;
           }
         }
       }
