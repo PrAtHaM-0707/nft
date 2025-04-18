@@ -149,7 +149,7 @@ export default function SellNFT() {
                             placeholder="Axie Infinity Collection"
                             onChange={e => updateFormParams({ ...formParams, description: e.target.value })}
                             value={formParams.description}
-                        ></textarea>
+                        />
                     </div>
 
                     <div className="mb-4">
@@ -168,7 +168,7 @@ export default function SellNFT() {
 
                     <div className="mb-6">
                         <label className="block text-purple-300 text-sm font-semibold mb-2" htmlFor="image">
-                            Upload Image (<500 KB)
+                            Upload Image (&lt;500 KB)
                         </label>
                         <input
                             className="text-white"
@@ -178,7 +178,7 @@ export default function SellNFT() {
                         {uploadStatus === 'success' && (
                             <div className="flex items-center mt-2 text-green-400">
                                 <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
                                 </svg>
                                 Pinata Upload Verified
                             </div>
@@ -186,7 +186,7 @@ export default function SellNFT() {
                         {uploadStatus === 'failed' && (
                             <div className="flex items-center mt-2 text-red-400">
                                 <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path>
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
                                 </svg>
                                 Pinata Upload Failed
                             </div>
