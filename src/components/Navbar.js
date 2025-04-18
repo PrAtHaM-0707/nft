@@ -151,8 +151,7 @@ function Navbar() {
         <div className="flex flex-col lg:flex-row justify-between items-center">
           <li className="flex items-center space-x-3 list-none">
             <Link to="/" className="flex items-center space-x-2">
-              <img src={fullLogo} alt="NFT Marketplace" className="w-24 lg:w-32 h-auto" />
-              <span className="font-bold text-xl">NFT Marketplace</span>
+             <span className="font-bold text-xl">NFT Marketplace</span>
             </Link>
           </li>
 
