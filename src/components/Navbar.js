@@ -5,7 +5,7 @@ import { useLocation } from "react-router";
 
 function Navbar() {
   const [connected, toggleConnect] = useState(false);
-  const [currAddress, updateAddress] = useState("0x");
+  const [currAddress, updateAddress] = useState(localStorage.getItem("walletAddress") || "0x");
   const [isConnecting, setIsConnecting] = useState(false);
   const location = useLocation();
 
@@ -16,10 +16,12 @@ function Navbar() {
       const signer = provider.getSigner();
       const addr = await signer.getAddress();
       updateAddress(addr);
+      localStorage.setItem("walletAddress", addr);
       toggleConnect(true);
     } catch (error) {
       console.error("Error fetching address:", error);
       updateAddress("0x");
+      localStorage.removeItem("walletAddress");
       toggleConnect(false);
     }
   }
@@ -27,57 +29,83 @@ function Navbar() {
   async function connectWebsite() {
     setIsConnecting(true);
     try {
-      if (!window.ethereum) throw new Error("MetaMask not detected");
+      // Prompt user for wallet address
+      const userInput = prompt("Please enter your wallet address:");
+      if (!userInput) {
+        throw new Error("No address provided");
+      }
 
-      const chainId = await window.ethereum.request({ method: "eth_chainId" });
-      if (chainId !== "0x8274f") { // Sepolia chain ID
-        try {
-          await window.ethereum.request({
-            method: "wallet_switchEthereumChain",
-            params: [{ chainId: "0x8274f" }],
-          });
-        } catch (switchError) {
-          if (switchError.code === 4902) {
-            await window.ethereum.request({
-              method: "wallet_addEthereumChain",
-              params: [
-                {
-                  chainId: "0x8274f", // Sepolia
-                  chainName: "Sepolia Test Network",
-                  nativeCurrency: {
-                    name: "Sepolia ETH",
-                    symbol: "ETH",
-                    decimals: 18,
-                  },
-                  rpcUrls: ["https://rpc.sepolia.org"], // Public Sepolia RPC
-                  blockExplorerUrls: ["https://sepolia.etherscan.io"],
-                },
-              ],
-            });
+      // Basic validation for Ethereum address
+      const isValidAddress = /^0x[a-fA-F0-9]{40}$/.test(userInput);
+      if (!isValidAddress) {
+        throw new Error("Invalid wallet address format");
+      }
+
+      updateAddress(userInput);
+      localStorage.setItem("walletAddress", userInput);
+      toggleConnect(true);
+
+      // Existing MetaMask connection logic
+      if (window.ethereum) {
+        const chainId = await window.ethereum.request({ method: "eth_chainId" });
+        if (chainId !== "0x8274f") {
+          try {
             await window.ethereum.request({
               method: "wallet_switchEthereumChain",
               params: [{ chainId: "0x8274f" }],
             });
-          } else {
-            throw switchError;
+          } catch (switchError) {
+            if (switchError.code === 4902) {
+              await window.ethereum.request({
+                method: "wallet_addEthereumChain",
+                params: [
+                  {
+                    chainId: "0x8274f",
+                    chainName: "Sepolia Test Network",
+                    nativeCurrency: {
+                      name: "Sepolia ETH",
+                      symbol: "ETH",
+                      decimals: 18,
+                    },
+                    rpcUrls: ["https://rpc.sepolia.org"],
+                    blockExplorerUrls: ["https://sepolia.etherscan.io"],
+                  },
+                ],
+              });
+              await window.ethereum.request({
+                method: "wallet_switchEthereumChain",
+                params: [{ chainId: "0x8274f" }],
+              });
+            } else {
+              throw switchError;
+            }
           }
         }
-      }
 
-      const accounts = await window.ethereum.request({ method: "eth_requestAccounts" });
-      if (accounts.length > 0) {
-        await getAddress();
+        const accounts = await window.ethereum.request({ method: "eth_requestAccounts" });
+        if (accounts.length > 0) {
+          await getAddress();
+        }
       }
     } catch (error) {
       console.error("Error connecting wallet:", error);
       updateAddress("0x");
+      localStorage.removeItem("walletAddress");
       toggleConnect(false);
+      alert(error.message || "Failed to connect wallet");
     } finally {
       setIsConnecting(false);
     }
   }
 
   useEffect(() => {
+    // Check for stored wallet address on mount
+    const storedAddress = localStorage.getItem("walletAddress");
+    if (storedAddress) {
+      updateAddress(storedAddress);
+      toggleConnect(true);
+    }
+
     if (!window.ethereum) return;
 
     const checkConnection = async () => {
@@ -88,8 +116,8 @@ function Navbar() {
         if (accounts.length > 0) {
           await getAddress();
         } else {
-          toggleConnect(false);
-          updateAddress("0x");
+          toggleConnect(!!storedAddress);
+          updateAddress(storedAddress || "0x");
         }
       } catch (error) {
         console.error("Error checking connection:", error);
@@ -102,8 +130,8 @@ function Navbar() {
       if (accounts.length > 0) {
         getAddress();
       } else {
-        toggleConnect(false);
-        updateAddress("0x");
+        toggleConnect(!!localStorage.getItem("walletAddress"));
+        updateAddress(localStorage.getItem("walletAddress") || "0x");
       }
     });
 
