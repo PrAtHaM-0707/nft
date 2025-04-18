@@ -1,5 +1,5 @@
-import Navbar from "./Navbar";
-import NFTTile from "./NFTTile";
+import Navbar from "./Navbar.js";
+import NFTTile from "./NFTTile.js";
 import MarketplaceJSON from "../Marketplace.json";
 import axios from "axios";
 import { useState, useEffect, useCallback, useMemo } from "react";
@@ -13,7 +13,7 @@ export default function Marketplace() {
                 description: "Alchemy's First NFT",
                 website: "http://axieinfinity.io",
                 image: "https://gateway.pinata.cloud/ipfs/QmTsRJX7r5gyubjkdmzFrKQhHv74p5wT9LdeF1m3RTqrE5",
-                price: "0.03ETH",
+                price: "0.03",
                 currentlySelling: "True",
                 address: "0xe81Bf5A757CB4f7F82a2F23b1e59bE45c33c5b13",
             },
@@ -22,7 +22,7 @@ export default function Marketplace() {
                 description: "Alchemy's Second NFT",
                 website: "http://axieinfinity.io",
                 image: "https://gateway.pinata.cloud/ipfs/QmdhoL9K8my2vi3fej97foiqGmJ389SMs55oC5EdkrxF2M",
-                price: "0.03ETH",
+                price: "0.03",
                 currentlySelling: "True",
                 address: "0xe81Bf5A757C4f7F82a2F23b1e59bE45c33c5b13",
             },
@@ -31,7 +31,7 @@ export default function Marketplace() {
                 description: "Alchemy's Third NFT",
                 website: "http://axieinfinity.io",
                 image: "https://gateway.pinata.cloud/ipfs/QmTsRJX7r5gyubjkdmzFrKQhHv74p5wT9LdeF1m3RTqrE5",
-                price: "0.03ETH",
+                price: "0.03",
                 currentlySelling: "True",
                 address: "0xe81Bf5A757C4f7F82a2F23b1e59bE45c33c5b13",
             },
@@ -42,37 +42,47 @@ export default function Marketplace() {
     const [dataFetched, updateFetched] = useState(false);
     const [loading, setLoading] = useState(false);
 
+    // Toggle this to match SellNFT.js for mock mode
+    const useMock = true; // Set to true for testing/demo purposes
+
     const getAllNFTs = useCallback(async () => {
         setLoading(true);
         try {
-            const ethers = require("ethers");
-            if (!window.ethereum) throw new Error("MetaMask not detected");
-            const provider = new ethers.providers.Web3Provider(window.ethereum);
-            const signer = provider.getSigner();
-            let contract = new ethers.Contract(MarketplaceJSON.address, MarketplaceJSON.abi, signer);
-            let transaction = await contract.getAllNFTs();
+            if (useMock) {
+                // Use mock NFTs from localStorage
+                const mockNFTs = JSON.parse(localStorage.getItem('mockNFTs') || '[]');
+                updateData(mockNFTs.length > 0 ? mockNFTs : sampleData);
+                updateFetched(true);
+            } else {
+                const ethers = require("ethers");
+                if (!window.ethereum) throw new Error("MetaMask not detected");
+                const provider = new ethers.providers.Web3Provider(window.ethereum);
+                const signer = provider.getSigner();
+                let contract = new ethers.Contract(MarketplaceJSON.address, MarketplaceJSON.abi, signer);
+                let transaction = await contract.getAllNFTs();
 
-            const items = await Promise.all(
-                transaction.map(async (i) => {
-                    const tokenURI = await contract.tokenURI(i.tokenId);
-                    console.log("getting this tokenUri", tokenURI);
-                    const ipfsUrl = GetIpfsUrlFromPinata(tokenURI);
-                    const meta = await axios.get(ipfsUrl);
-                    const price = ethers.utils.formatUnits(i.price.toString(), "ether");
-                    return {
-                        price,
-                        tokenId: i.tokenId.toNumber(),
-                        seller: i.seller,
-                        owner: i.owner,
-                        image: meta.data.image,
-                        name: meta.data.name,
-                        description: meta.data.description,
-                    };
-                })
-            );
+                const items = await Promise.all(
+                    transaction.map(async (i) => {
+                        const tokenURI = await contract.tokenURI(i.tokenId);
+                        console.log("getting this tokenUri", tokenURI);
+                        const ipfsUrl = GetIpfsUrlFromPinata(tokenURI);
+                        const meta = await axios.get(ipfsUrl);
+                        const price = ethers.utils.formatUnits(i.price.toString(), "ether");
+                        return {
+                            price,
+                            tokenId: i.tokenId.toNumber(),
+                            seller: i.seller,
+                            owner: i.owner,
+                            image: meta.data.image,
+                            name: meta.data.name,
+                            description: meta.data.description,
+                        };
+                    })
+                );
 
-            updateFetched(true);
-            updateData(items);
+                updateFetched(true);
+                updateData(items);
+            }
         } catch (error) {
             console.error("Error fetching NFTs:", error);
             updateData(sampleData);
@@ -80,14 +90,14 @@ export default function Marketplace() {
             setLoading(false);
             localStorage.removeItem("refreshNFTs");
         }
-    }, [sampleData]); 
+    }, [sampleData]);
 
     useEffect(() => {
         if (!dataFetched || localStorage.getItem("refreshNFTs") === "true") {
             updateFetched(false);
             getAllNFTs();
         }
-    }, [dataFetched, getAllNFTs, updateFetched]);
+    }, [dataFetched, getAllNFTs]);
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-950 to-black text-white">
