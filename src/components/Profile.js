@@ -1,6 +1,4 @@
 import Navbar from "./Navbar";
-import MarketplaceJSON from "../Marketplace.json";
-import axios from "axios";
 import { useState, useEffect } from "react";
 import NFTTile from "./NFTTile";
 
@@ -12,41 +10,16 @@ export default function Profile() {
 
     async function fetchNFTs() {
         try {
-            const ethers = require("ethers");
-            let valueAccumulator = 0;
-
-            const provider = new ethers.providers.Web3Provider(window.ethereum);
-            const signer = provider.getSigner();
-            const storedAddress = localStorage.getItem("walletAddress");
-            const userAddress = storedAddress || (await signer.getAddress());
-
-            const contract = new ethers.Contract(MarketplaceJSON.address, MarketplaceJSON.abi, signer);
-            const listedItems = await contract.getMyNFTs();
-
-            const nftList = await Promise.all(
-                listedItems.map(async (item) => {
-                    const tokenURI = await contract.tokenURI(item.tokenId);
-                    const meta = (await axios.get(tokenURI)).data;
-
-                    const ethPrice = ethers.utils.formatUnits(item.price.toString(), 'ether');
-                    valueAccumulator += parseFloat(ethPrice);
-
-                    return {
-                        tokenId: item.tokenId.toNumber(),
-                        name: meta.name,
-                        description: meta.description,
-                        image: meta.image,
-                        price: ethPrice,
-                        owner: item.owner,
-                        seller: item.seller,
-                    };
-                })
-            );
+            const nfts = JSON.parse(localStorage.getItem("mockNFTs") || "[]");
+            const userAddress = localStorage.getItem("walletAddress") || "0x";
+            const userNFTs = nfts.filter((nft) => nft.owner === userAddress || nft.seller === userAddress);
+            const valueAccumulator = userNFTs.reduce((sum, nft) => sum + parseFloat(nft.price || 0), 0);
 
             setWallet(userAddress);
             setTotalValue(valueAccumulator.toFixed(3));
-            setNfts(nftList);
+            setNfts(userNFTs);
             setFetched(true);
+            localStorage.removeItem("refreshNFTs"); // Clear refresh flag
         } catch (error) {
             console.error("Error fetching NFTs:", error);
             setNfts([]);
@@ -56,7 +29,8 @@ export default function Profile() {
     }
 
     useEffect(() => {
-        if (!fetched) {
+        if (!fetched || localStorage.getItem("refreshNFTs") === "true") {
+            setFetched(false);
             fetchNFTs();
         }
     }, [fetched]);
