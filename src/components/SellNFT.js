@@ -1,4 +1,5 @@
-import Navbar from "./Navbar.jsx";
+
+import Navbar from "./Navbar.js";
 import { useState } from "react";
 import { uploadFileToIPFS, uploadJSONToIPFS } from "../pinata";
 import Marketplace from '../Marketplace.json';
@@ -155,6 +156,18 @@ export default function SellNFT() {
             if (useMock) {
                 await new Promise(resolve => setTimeout(resolve, 2000)); // Simulate transaction delay
                 console.log("Mock NFT listed with metadata:", metadataURL);
+                // Store mock NFT in localStorage for Marketplace.js
+                const mockNFTs = JSON.parse(localStorage.getItem('mockNFTs') || '[]');
+                mockNFTs.push({
+                    price: formParams.price,
+                    tokenId: mockNFTs.length + 1,
+                    seller: storedAddress,
+                    owner: storedAddress,
+                    image: fileURL,
+                    name: formParams.name,
+                    description: formParams.description,
+                });
+                localStorage.setItem('mockNFTs', JSON.stringify(mockNFTs));
             } else {
                 let transaction = await contract.createToken(metadataURL, price, { value: listingPrice });
                 await transaction.wait();
