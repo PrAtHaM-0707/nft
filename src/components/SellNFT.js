@@ -1,4 +1,3 @@
-```javascript
 import Navbar from "./Navbar.js";
 import { useState } from "react";
 
@@ -174,4 +173,4 @@ export default function SellNFT() {
         </div>
     );
 }
-```
+
