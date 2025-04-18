@@ -44,57 +44,60 @@ export default function SellNFT() {
     }
 
     async function listNFT(e) {
-        e.preventDefault();
-        const { name, description, price } = formParams;
-        if (!name || !description || !price || !file) {
-            updateMessage("Please fill all the fields and select an image!");
-            return;
-        }
-
-        const storedAddress = localStorage.getItem("walletAddress");
-        if (!storedAddress) {
-            updateMessage("No wallet connected. Please connect in Navbar.");
-            return;
-        }
-
-        try {
-            disableButton();
-            updateMessage("Listing NFT... Please wait!");
-
-            // Create mock NFT data
-            const mockImageURL = `ipfs://mock-cid-${Date.now()}/${file.name}`;
-            const nftData = {
-                name,
-                description,
-                price,
-                image: mockImageURL,
-                seller: storedAddress,
-                owner: storedAddress,
-                tokenId: Date.now(), // Unique ID for demo
-            };
-
-            // Store in localStorage
-            const nfts = JSON.parse(localStorage.getItem('mockNFTs') || '[]');
-            nfts.push(nftData);
-            localStorage.setItem('mockNFTs', JSON.stringify(nfts));
-
-            updateMessage("Successfully listed your NFT!");
-            enableButton();
-            updateFormParams({ name: '', description: '', price: '' });
-            setFile(null);
-            localStorage.setItem('refreshNFTs', 'true'); // Signal refresh
-            setTimeout(() => {
-                updateMessage("");
-                window.location.replace("/");
-            }, 3000);
-        } catch (e) {
-            console.error("Error listing NFT:", e);
-            updateMessage("Failed to list NFT: " + e.message);
-            enableButton();
-            setTimeout(() => updateMessage(""), 5000);
-        }
+    e.preventDefault();
+    const { name, description, price } = formParams;
+    if (!name || !description || !price || !file) {
+        updateMessage("Please fill all the fields and select an image!");
+        return;
     }
 
+    const storedAddress = localStorage.getItem("walletAddress");
+    if (!storedAddress) {
+        updateMessage("No wallet connected. Please connect in Navbar.");
+        return;
+    }
+
+    try {
+        disableButton();
+        updateMessage("Listing NFT... Please wait!");
+
+        // Convert file to data URL
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        await new Promise((resolve) => (reader.onload = resolve));
+
+        const imageURL = reader.result; // Data URL (e.g., data:image/png;base64,...)
+
+        const nftData = {
+            name,
+            description,
+            price,
+            image: imageURL,
+            seller: storedAddress,
+            owner: storedAddress,
+            tokenId: Date.now(),
+        };
+
+        const nfts = JSON.parse(localStorage.getItem("mockNFTs") || "[]");
+        nfts.push(nftData);
+        localStorage.setItem("mockNFTs", JSON.stringify(nfts));
+
+        updateMessage("Successfully listed your NFT!");
+        enableButton();
+        updateFormParams({ name: "", description: "", price: "" });
+        setFile(null);
+        localStorage.setItem("refreshNFTs", "true");
+        setTimeout(() => {
+            updateMessage("");
+            window.location.replace("/");
+        }, 3000);
+    } catch (e) {
+        console.error("Error listing NFT:", e);
+        updateMessage("Failed to list NFT: " + e.message);
+        enableButton();
+        setTimeout(() => updateMessage(""), 5000);
+    }
+}
     return React.createElement(
         "div",
         { className: "min-h-screen bg-gradient-to-br from-gray-900 via-purple-950 to-black text-white" },
