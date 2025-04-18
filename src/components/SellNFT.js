@@ -6,8 +6,9 @@ import Marketplace from '../Marketplace.json';
 export default function SellNFT() {
     const [formParams, updateFormParams] = useState({ name: '', description: '', price: '' });
     const [fileURL, setFileURL] = useState(null);
-    const ethers = require("ethers");
     const [message, updateMessage] = useState('');
+    const [uploadStatus, setUploadStatus] = useState(null); // null, 'success', or 'failed'
+    const ethers = require("ethers");
 
     async function disableButton() {
         const listButton = document.getElementById("list-button");
@@ -25,18 +26,25 @@ export default function SellNFT() {
         const file = e.target.files[0];
         try {
             disableButton();
-            updateMessage("Uploading image... Please wait!");
+            updateMessage("Uploading image to Pinata... Please wait!");
+            setUploadStatus(null);
             const response = await uploadFileToIPFS(file);
             if (response.success === true) {
                 enableButton();
-                updateMessage("");
+                updateMessage("Image uploaded successfully!");
+                setUploadStatus('success');
                 console.log("Uploaded image to Pinata: ", response.pinataURL);
                 setFileURL(response.pinataURL);
+                setTimeout(() => updateMessage(""), 3000);
+            } else {
+                throw new Error("Pinata upload failed");
             }
         } catch (e) {
             console.error("Error during file upload:", e);
             updateMessage("Failed to upload image. Please try again.");
+            setUploadStatus('failed');
             enableButton();
+            setTimeout(() => updateMessage(""), 5000);
         }
     }
 
@@ -55,6 +63,7 @@ export default function SellNFT() {
                 console.log("Uploaded JSON to Pinata: ", response);
                 return response.pinataURL;
             }
+            return -1;
         } catch (e) {
             console.error("Error uploading JSON metadata:", e);
             updateMessage("Failed to upload metadata. Please try again.");
@@ -70,6 +79,12 @@ export default function SellNFT() {
 
             const provider = new ethers.providers.Web3Provider(window.ethereum);
             const signer = provider.getSigner();
+            const storedAddress = localStorage.getItem("walletAddress");
+            if (!storedAddress) {
+                updateMessage("No wallet connected. Please connect in Navbar.");
+                return;
+            }
+
             disableButton();
             updateMessage("Listing NFT... Please wait (up to 5 mins)");
 
@@ -85,6 +100,7 @@ export default function SellNFT() {
             enableButton();
             updateFormParams({ name: '', description: '', price: '' });
             setFileURL(null);
+            setUploadStatus(null);
             localStorage.setItem('refreshNFTs', 'true'); // Signal refresh
             setTimeout(() => {
                 updateMessage("");
@@ -152,13 +168,29 @@ export default function SellNFT() {
 
                     <div className="mb-6">
                         <label className="block text-purple-300 text-sm font-semibold mb-2" htmlFor="image">
-                            Upload Image (&lt;500 KB)
+                            Upload Image (<500 KB)
                         </label>
                         <input
                             className="text-white"
                             type="file"
                             onChange={OnChangeFile}
                         />
+                        {uploadStatus === 'success' && (
+                            <div className="flex items-center mt-2 text-green-400">
+                                <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
+                                </svg>
+                                Pinata Upload Verified
+                            </div>
+                        )}
+                        {uploadStatus === 'failed' && (
+                            <div className="flex items-center mt-2 text-red-400">
+                                <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path>
+                                </svg>
+                                Pinata Upload Failed
+                            </div>
+                        )}
                     </div>
 
                     <div className={`text-center text-sm mb-4 ${message.includes("Failed") ? "text-red-400" : "text-green-400"}`}>
