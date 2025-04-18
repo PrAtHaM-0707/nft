@@ -1,44 +1,30 @@
 import Navbar from "./Navbar";
-import { useParams } from 'react-router-dom';
-import MarketplaceJSON from "../Marketplace.json";
-import axios from "axios";
-import { useState } from "react";
-import { GetIpfsUrlFromPinata } from "../utils";
+import { useParams } from "react-router-dom";
+import { useState, useEffect } from "react";
 
-export default function NFTPage(props) {
+export default function NFTPage() {
     const [data, updateData] = useState({});
     const [dataFetched, updateDataFetched] = useState(false);
     const [message, updateMessage] = useState("");
-    const [currAddress, updateCurrAddress] = useState("0x");
+    const [currAddress, updateCurrAddress] = useState(localStorage.getItem("walletAddress") || "0x");
 
-    async function getNFTData(tokenId) {
-        const ethers = require("ethers");
+    const params = useParams();
+    const tokenId = params.tokenId;
+
+    function getNFTData(tokenId) {
         try {
-            if (!window.ethereum) throw new Error("MetaMask not detected");
-            const provider = new ethers.providers.Web3Provider(window.ethereum);
-            const signer = provider.getSigner();
-            const addr = await signer.getAddress();
-            let contract = new ethers.Contract(MarketplaceJSON.address, MarketplaceJSON.abi, signer);
-            const tokenURI = await contract.tokenURI(tokenId);
-            const listedToken = await contract.getListedTokenForId(tokenId);
-            const ipfsUrl = GetIpfsUrlFromPinata(tokenURI);
-            const meta = await axios.get(ipfsUrl);
-            console.log(listedToken);
-
-            const item = {
-                price: meta.data.price,
-                tokenId: tokenId,
-                seller: listedToken.seller,
-                owner: listedToken.owner,
-                image: meta.data.image,
-                name: meta.data.name,
-                description: meta.data.description,
-            };
-            console.log(item);
-            updateData(item);
+            const nfts = JSON.parse(localStorage.getItem("mockNFTs") || "[]");
+            const nft = nfts.find((item) => item.tokenId === parseInt(tokenId));
+            if (!nft) {
+                throw new Error("NFT not found");
+            }
+            // Use a placeholder image or convert File to URL if needed
+            updateData({
+                ...nft,
+                image: nft.image || "https://via.placeholder.com/400", // Placeholder if no image
+            });
             updateDataFetched(true);
-            console.log("address", addr);
-            updateCurrAddress(addr);
+            updateCurrAddress(localStorage.getItem("walletAddress") || "0x");
         } catch (e) {
             console.error("Error fetching NFT data:", e);
             updateMessage("Failed to load NFT data. Please try again.");
@@ -47,28 +33,40 @@ export default function NFTPage(props) {
 
     async function buyNFT(tokenId) {
         try {
-            const ethers = require("ethers");
-            if (!window.ethereum) throw new Error("MetaMask not detected");
-            const provider = new ethers.providers.Web3Provider(window.ethereum);
-            const signer = provider.getSigner();
-            let contract = new ethers.Contract(MarketplaceJSON.address, MarketplaceJSON.abi, signer);
-            const salePrice = ethers.utils.parseUnits(data.price, 'ether');
-            updateMessage("Buying the NFT... Please Wait (Up to 5 mins)");
-            const transaction = await contract.executeSale(tokenId, { value: salePrice });
-            await transaction.wait();
+            if (!currAddress || currAddress === "0x") {
+                throw new Error("Please connect your wallet");
+            }
+            if (currAddress === data.owner || currAddress === data.seller) {
+                throw new Error("You already own or are selling this NFT");
+            }
+
+            updateMessage("Buying the NFT... Please wait!");
+            const nfts = JSON.parse(localStorage.getItem("mockNFTs") || "[]");
+            const updatedNFTs = nfts.map((nft) =>
+                nft.tokenId === parseInt(tokenId)
+                    ? { ...nft, owner: currAddress, seller: "" } // Update owner, clear seller
+                    : nft
+            );
+            localStorage.setItem("mockNFTs", JSON.stringify(updatedNFTs));
+            localStorage.setItem("refreshNFTs", "true"); // Signal refresh for Marketplace and Profile
+
             updateMessage("You successfully bought the NFT!");
-            setTimeout(() => updateMessage(""), 3000); // Clear message after 3 seconds
+            setTimeout(() => {
+                updateMessage("");
+                window.location.replace("/profile"); // Redirect to Profile
+            }, 3000);
         } catch (e) {
             console.error("Purchase error:", e);
             updateMessage("Failed to buy NFT: " + e.message);
-            setTimeout(() => updateMessage(""), 5000); // Clear error after 5 seconds
+            setTimeout(() => updateMessage(""), 5000);
         }
     }
 
-    const params = useParams();
-    const tokenId = params.tokenId;
-    if (!dataFetched) getNFTData(tokenId);
-    if (typeof data.image === "string") data.image = GetIpfsUrlFromPinata(data.image);
+    useEffect(() => {
+        if (!dataFetched && tokenId) {
+            getNFTData(tokenId);
+        }
+    }, [dataFetched, tokenId]);
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-950 to-black text-white">
@@ -86,7 +84,7 @@ export default function NFTPage(props) {
                     <p className="text-gray-300"><strong>Owner:</strong> <span className="text-sm font-mono">{data.owner}</span></p>
                     <p className="text-gray-300"><strong>Seller:</strong> <span className="text-sm font-mono">{data.seller}</span></p>
                     <div>
-                        {currAddress !== data.owner && currAddress !== data.seller ? (
+                        {currAddress !== data.owner && currAddress !== data.seller && currAddress !== "0x" ? (
                             <button
                                 className="bg-gradient-to-r from-blue-500 to-blue-700 text-white font-bold py-2 px-4 rounded text-sm hover:shadow-lg transition duration-200"
                                 onClick={() => buyNFT(tokenId)}
@@ -94,7 +92,9 @@ export default function NFTPage(props) {
                                 Buy this NFT
                             </button>
                         ) : (
-                            <div className="text-green-400 font-semibold">You are the owner of this NFT</div>
+                            <div className="text-green-400 font-semibold">
+                                {currAddress === "0x" ? "Please connect your wallet" : "You are the owner or seller of this NFT"}
+                            </div>
                         )}
                     </div>
                     {message && (
