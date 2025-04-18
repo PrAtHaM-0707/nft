@@ -7,14 +7,13 @@ export default function Marketplace() {
         () => [
             {
                 name: "NFT#1",
-                description: "Alchemy's First NFT",
+                description: "First NFT",
                 image: "https://via.placeholder.com/400",
                 price: "0.03",
                 seller: "0xe81Bf5A757CB4f7F82a2F23b1e59bE45c33c5b13",
                 owner: "0xe81Bf5A757CB4f7F82a2F23b1e59bE45c33c5b13",
                 tokenId: 1,
             },
-            // ... other sample NFTs
         ],
         []
     );
