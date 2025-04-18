@@ -1,5 +1,6 @@
+
+import React, { useState } from "react";
 import Navbar from "./Navbar.js";
-import { useState } from "react";
 
 export default function SellNFT() {
     const [formParams, updateFormParams] = useState({ name: '', description: '', price: '' });
@@ -94,83 +95,98 @@ export default function SellNFT() {
         }
     }
 
-    return (
-        <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-950 to-black text-white">
-            <Navbar />
-            <div className="flex flex-col items-center mt-12 px-4">
-                <form className="bg-[#1a1a1a] shadow-lg rounded-2xl px-8 pt-6 pb-8 w-full max-w-md border border-purple-800">
-                    <h3 className="text-center text-xl font-bold text-purple-400 mb-6">
-                        Upload your NFT to the marketplace
-                    </h3>
-
-                    <div className="mb-4">
-                        <label className="block text-purple-300 text-sm font-semibold mb-2" htmlFor="name">
-                            NFT Name
-                        </label>
-                        <input
-                            className="bg-gray-700 text-white border border-gray-600 rounded w-full py-2 px-3 focus:outline-none focus:ring-2 focus:ring-purple-500"
-                            id="name"
-                            type="text"
-                            placeholder="Axie#4563"
-                            onChange={e => updateFormParams({ ...formParams, name: e.target.value })}
-                            value={formParams.name}
-                        />
-                    </div>
-
-                    <div className="mb-4">
-                        <label className="block text-purple-300 text-sm font-semibold mb-2" htmlFor="description">
-                            NFT Description
-                        </label>
-                        <textarea
-                            className="bg-gray-700 text-white border border-gray-600 rounded w-full py-2 px-3 focus:outline-none focus:ring-2 focus:ring-purple-500"
-                            cols="40"
-                            rows="3"
-                            id="description"
-                            placeholder="Axie Infinity Collection"
-                            onChange={e => updateFormParams({ ...formParams, description: e.target.value })}
-                            value={formParams.description}
-                        />
-                    </div>
-
-                    <div className="mb-4">
-                        <label className="block text-purple-300 text-sm font-semibold mb-2" htmlFor="price">
-                            Price (in ETH)
-                        </label>
-                        <input
-                            className="bg-gray-700 text-white border border-gray-600 rounded w-full py-2 px-3 focus:outline-none focus:ring-2 focus:ring-purple-500"
-                            type="number"
-                            placeholder="Min 0.01 ETH"
-                            step="0.01"
-                            onChange={e => updateFormParams({ ...formParams, price: e.target.value })}
-                            value={formParams.price}
-                        />
-                    </div>
-
-                    <div className="mb-6">
-                        <label className="block text-purple-300 text-sm font-semibold mb-2" htmlFor="image">
-                            Upload Image (<500 KB)
-                        </label>
-                        <input
-                            className="text-white"
-                            type="file"
-                            onChange={handleFileChange}
-                        />
-                    </div>
-
-                    <div className={`text-center text-sm mb-4 ${message.includes("Failed") ? "text-red-400" : "text-green-400"}`}>
-                        {message}
-                    </div>
-
-                    <button
-                        onClick={listNFT}
-                        className="font-bold w-full bg-purple-600 hover:bg-purple-700 text-white rounded-lg py-2 transition duration-300 shadow-md"
-                        id="list-button"
-                    >
-                        List NFT
-                    </button>
-                </form>
-            </div>
-        </div>
+    return React.createElement(
+        "div",
+        { className: "min-h-screen bg-gradient-to-br from-gray-900 via-purple-950 to-black text-white" },
+        React.createElement(Navbar, null),
+        React.createElement(
+            "div",
+            { className: "flex flex-col items-center mt-12 px-4" },
+            React.createElement(
+                "form",
+                { className: "bg-[#1a1a1a] shadow-lg rounded-2xl px-8 pt-6 pb-8 w-full max-w-md border border-purple-800" },
+                React.createElement(
+                    "h3",
+                    { className: "text-center text-xl font-bold text-purple-400 mb-6" },
+                    "Upload your NFT to the marketplace"
+                ),
+                React.createElement(
+                    "div",
+                    { className: "mb-4" },
+                    React.createElement(
+                        "label",
+                        { className: "block text-purple-300 text-sm font-semibold mb-2", htmlFor: "name" },
+                        "NFT Name"
+                    ),
+                    React.createElement("input", {
+                        className: "bg-gray-700 text-white border border-gray-600 rounded w-full py-2 px-3 focus:outline-none focus:ring-2 focus:ring-purple-500",
+                        id: "name",
+                        type: "text",
+                        placeholder: "Axie#4563",
+                        onChange: e => updateFormParams({ ...formParams, name: e.target.value }),
+                        value: formParams.name,
+                    })
+                ),
+                React.createElement(
+                    "div",
+                    { className: "mb-4" },
+                    React.createElement(
+                        "label",
+                        { className: "block text-purple-300 text-sm font-semibold mb-2", htmlFor: "description" },
+                        "NFT Description"
+                    ),
+                    React.createElement("textarea", {
+                        className: "bg-gray-700 text-white border border-gray-600 rounded w-full py-2 px-3 focus:outline-none focus:ring-2 focus:ring-purple-500",
+                        cols: "40",
+                        rows: "3",
+                        id: "description",
+                        placeholder: "Axie Infinity Collection",
+                        onChange: e => updateFormParams({ ...formParams, description: e.target.value }),
+                        value: formParams.description,
+                    })
+                ),
+                React.createElement(
+                    "div",
+                    { className: "mb-4" },
+                    React.createElement(
+                        "label",
+                        { className: "block text-purple-300 text-sm font-semibold mb-2", htmlFor: "price" },
+                        "Price (in ETH)"
+                    ),
+                    React.createElement("input", {
+                        className: "bg-gray-700 text-white border border-gray-600 rounded w-full py-2 px-3 focus:outline-none focus:ring-2 focus:ring-purple-500",
+                        type: "number",
+                        placeholder: "Min 0.01 ETH",
+                        step: "0.01",
+                        onChange: e => updateFormParams({ ...formParams, price: e.target.value }),
+                        value: formParams.price,
+                    })
+                ),
+                React.createElement(
+                    "div",
+                    { className: "mb-6" },
+                    React.createElement(
+                        "label",
+                        { className: "block text-purple-300 text-sm font-semibold mb-2", htmlFor: "image" },
+                        "Upload Image (<500 KB)"
+                    ),
+                    React.createElement("input", {
+                        className: "text-white",
+                        type: "file",
+                        onChange: handleFileChange,
+                    })
+                ),
+                React.createElement(
+                    "div",
+                    { className: `text-center text-sm mb-4 ${message.includes("Failed") ? "text-red-400" : "text-green-400"}` },
+                    message
+                ),
+                React.createElement("button", {
+                    onClick: listNFT,
+                    className: "font-bold w-full bg-purple-600 hover:bg-purple-700 text-white rounded-lg py-2 transition duration-300 shadow-md",
+                    id: "list-button",
+                }, "List NFT")
+            )
+        )
     );
 }
-
