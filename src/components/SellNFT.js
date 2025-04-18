@@ -7,7 +7,7 @@ export default function SellNFT() {
     const [formParams, updateFormParams] = useState({ name: '', description: '', price: '' });
     const [fileURL, setFileURL] = useState(null);
     const [message, updateMessage] = useState('');
-    const [uploadStatus, setUploadStatus] = useState(null); 
+    const [uploadStatus, setUploadStatus] = useState(null); // null, 'success', or 'failed'
     const ethers = require("ethers");
 
     // Toggle this to false to use real Pinata uploads (requires valid Pinata API credentials)
@@ -150,8 +150,10 @@ export default function SellNFT() {
             const price = ethers.utils.parseUnits(formParams.price, 'ether');
             let listingPrice = await contract.getListPrice();
             listingPrice = listingPrice.toString();
+
+            // Mock transaction for demo (skip actual blockchain interaction)
             if (useMock) {
-                await new Promise(resolve => setTimeout(resolve, 2000));
+                await new Promise(resolve => setTimeout(resolve, 2000)); // Simulate transaction delay
                 console.log("Mock NFT listed with metadata:", metadataURL);
             } else {
                 let transaction = await contract.createToken(metadataURL, price, { value: listingPrice });
@@ -163,7 +165,7 @@ export default function SellNFT() {
             updateFormParams({ name: '', description: '', price: '' });
             setFileURL(null);
             setUploadStatus(null);
-            localStorage.setItem('refreshNFTs', 'true');
+            localStorage.setItem('refreshNFTs', 'true'); // Signal refresh
             setTimeout(() => {
                 updateMessage("");
                 window.location.replace("/");
